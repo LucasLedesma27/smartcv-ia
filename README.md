@@ -2,12 +2,22 @@
 
 Plataforma web para crear, administrar y mejorar currículums utilizando inteligencia artificial. Permite cargar datos profesionales y obtener recomendaciones inteligentes para mejorar la empleabilidad.
 
-## Demo
+## Repositorio y demo
 
-| Servicio | URL |
-|----------|-----|
-| Frontend (Vercel) | `https://tu-app.vercel.app` |
-| Backend (Render) | `https://tu-backend.onrender.com` |
+| Recurso | URL |
+|---------|-----|
+| **GitHub** | https://github.com/LucasLedesma27/smartcv-ia |
+| Frontend (Vercel) | _(completar tras deploy)_ |
+| Backend (Render) | _(completar tras deploy)_ |
+
+### Credenciales para el docente / evaluación
+
+| Email | Contraseña |
+|-------|------------|
+| `demo@smartcv.com` | `demo123` |
+
+> Guía completa de deploy: [`docs/DEPLOY-GUIA.md`](docs/DEPLOY-GUIA.md)  
+> Plantilla de entrega: [`docs/ENTREGA-DOCENTE.md`](docs/ENTREGA-DOCENTE.md)
 
 ## Tecnologías
 
@@ -28,7 +38,7 @@ Plataforma web para crear, administrar y mejorar currículums utilizando intelig
 - PostgreSQL
 
 ### IA
-- Google Gemini API (`gemini-1.5-flash`)
+- Google Gemini API (`gemini-2.5-flash`)
 
 ### DevOps
 - Docker + Docker Compose
@@ -54,7 +64,7 @@ Plataforma web para crear, administrar y mejorar currículums utilizando intelig
 
 1. Clonar el repositorio:
 ```bash
-git clone https://github.com/tu-usuario/smartcv.git
+git clone https://github.com/LucasLedesma27/smartcv-ia.git
 cd smartcv
 ```
 
@@ -144,27 +154,17 @@ Frontend en http://localhost:5173
 | POST | `/api/ai/analyze-cv` | Analizar CV |
 | POST | `/api/ai/generate-cover-letter` | Generar carta |
 
-## Despliegue
+## Despliegue en producción
 
-### PostgreSQL en Neon
-1. Crear proyecto en [Neon](https://neon.tech)
-2. Copiar connection string y agregar prefijo `jdbc:`:
-   ```
-   jdbc:postgresql://ep-xxx.region.aws.neon.tech/neondb?sslmode=require
-   ```
+Seguí la guía detallada en **[`docs/DEPLOY-GUIA.md`](docs/DEPLOY-GUIA.md)** (Neon → Render → Vercel).
 
-### Backend en Render
-1. Crear **Web Service** conectado al repo
-2. Root Directory: `backend`
-3. Build Command: `mvn clean package -DskipTests`
-4. Start Command: `java -jar target/smartcv-backend-1.0.0.jar`
-5. Variables de entorno: `DATABASE_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `GEMINI_API_KEY`, `CORS_ALLOWED_ORIGINS`
+Resumen rápido:
 
-### Frontend en Vercel
-1. Importar repo en [Vercel](https://vercel.com)
-2. Root Directory: `frontend`
-3. Framework Preset: Vite
-4. Variable: `VITE_API_BASE_URL=https://tu-backend.onrender.com/api`
+1. **Neon** — PostgreSQL gratis → copiar `DATABASE_URL`, `DB_USERNAME`, `DB_PASSWORD`
+2. **Render** — Web Service, carpeta `backend`, variables de entorno + `GEMINI_API_KEY`
+3. **Vercel** — carpeta `frontend`, `VITE_API_BASE_URL=https://tu-backend.onrender.com/api`
+4. **Render** — actualizar `CORS_ALLOWED_ORIGINS` con la URL de Vercel
+5. Probar login con `demo@smartcv.com` / `demo123`
 
 ## Capturas sugeridas
 

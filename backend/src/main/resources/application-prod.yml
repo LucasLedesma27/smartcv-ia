@@ -1,8 +1,10 @@
 spring:
   jpa:
     hibernate:
-      ddl-auto: validate
+      # update: crea/actualiza tablas en Neon al primer deploy (necesario sin migraciones Flyway)
+      ddl-auto: update
     show-sql: false
 
 app:
-  seed-data: false
+  # true en el primer deploy para que el docente use demo@smartcv.com / demo123
+  seed-data: ${SEED_DATA:true}
