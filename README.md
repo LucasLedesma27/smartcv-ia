@@ -7,8 +7,8 @@ Plataforma web para crear, administrar y mejorar currículums utilizando intelig
 | Recurso | URL |
 |---------|-----|
 | **GitHub** | https://github.com/LucasLedesma27/smartcv-ia |
-| Frontend (Vercel) | _(completar tras deploy)_ |
-| Backend (Render) | _(completar tras deploy)_ |
+| Frontend (Vercel) | https://smartcv-ia.vercel.app |
+| Backend (Render) | https://smartcv-ia.onrender.com |
 
 ### Credenciales para el docente / evaluación
 
