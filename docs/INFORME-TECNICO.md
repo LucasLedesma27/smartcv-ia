@@ -2,6 +2,11 @@
 
 > Bitácora del desarrollo asistido por IA para el TP Integrador.
 
+**Grupo:** No Signal  
+**Integrantes:** Lucas Ledesma, Juan Pablo Gómez, Leandro Paredes, Francisco Mestre  
+**Repositorio:** https://github.com/LucasLedesma27/smartcv-ia  
+**Demo online:** https://smartcv-ia.vercel.app
+
 ---
 
 ## 1. Herramientas de IA Utilizadas
@@ -140,6 +145,16 @@ Durante el desarrollo y las pruebas locales, el grupo enfrentó varios obstácul
 | Tests | Cobertura de tests básica (context load) | Suficiente para CI; tests de integración son mejora futura |
 | API Key ausente | Sin key configurada, los endpoints de IA fallan | Validación explícita en `GeminiService` con mensaje claro |
 
+### 6.4 Despliegue en producción (Render + Vercel + Neon)
+
+| Problema | Qué nos pasó | Solución aplicada |
+|----------|--------------|-------------------|
+| Login colgado en "Ingresando..." | Al abrir la app en Vercel por primera vez, el botón de login quedaba cargando sin responder. | El backend en Render (plan free) estaba "dormido". Tras esperar ~1 minuto o abrir `/actuator/health`, el servicio despertó y el login funcionó. |
+| Variable de entorno en Vercel | Vite embebe las variables en el build; si `VITE_API_BASE_URL` no está configurada antes del deploy, el frontend llama a `localhost`. | Configuramos `VITE_API_BASE_URL=https://smartcv-ia.onrender.com/api` en Vercel y redeployamos. |
+| CORS en producción | Sin CORS correcto, el navegador bloquea las peticiones del frontend al backend. | En Render configuramos `CORS_ALLOWED_ORIGINS=https://smartcv-ia.vercel.app`. |
+| Modelo Gemini incorrecto en Render | El análisis de CV fallaba con `gemini-1.5-flash` (modelo deprecado o saturado). | Cambiamos `GEMINI_MODEL=gemini-2.5-flash` en las variables de entorno de Render. |
+| Error 503 intermitente de Gemini | A veces el análisis funciona y otras veces falla con *"high demand"* (servicio saturado). | No es un error de nuestra app: es limitación del plan gratuito de Google. Reintentar tras 30 segundos suele funcionar. Agregamos lógica de reintentos y modelos alternativos en `GeminiService`. |
+
 ---
 
 ## 7. Lecciones Aprendidas del Grupo
@@ -162,9 +177,11 @@ Durante el desarrollo y las pruebas locales, el grupo enfrentó varios obstácul
 
 9. **La integración con LLMs requiere parseo defensivo**. Aunque pidamos JSON en el prompt, conviene forzar el formato con `responseSchema` y tener un parser que tolere variaciones (markdown, campos anidados, idiomas distintos).
 
-10. **Probar el flujo completo en local antes del deploy** nos ahorró llevar errores a producción. El grupo validó login, CRUD, dashboard, análisis de CV y carta de presentación con Docker antes de pensar en Render/Vercel.
+10. **Probar el flujo completo en local antes del deploy** nos ahorró llevar errores a producción. El grupo validó login, CRUD, dashboard, análisis de CV y carta de presentación con Docker antes de desplegar en Render/Vercel/Neon.
 
 11. **Documentar los errores en equipo** (este informe) ayuda a la defensa oral: demuestra que entendimos los problemas reales, no solo que copiamos código generado por IA.
+
+12. **El deploy no termina con el primer `git push`**. Hay que configurar variables de entorno en cada plataforma (Neon, Render, Vercel), conectar CORS y redeployar si se cambia algo crítico como la URL del backend.
 
 ---
 
@@ -174,4 +191,4 @@ El desarrollo de SmartCV IA demostró que las herramientas modernas de IA (Curso
 
 ---
 
-*Informe generado como parte de la entrega del TP Integrador — Desarrollo Ágil Asistido por IA.*
+*Informe del grupo **No Signal** — TP Integrador, Desarrollo Ágil Asistido por IA.*

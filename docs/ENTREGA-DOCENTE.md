@@ -1,10 +1,14 @@
 # SmartCV IA — Datos para evaluación
 
+**Grupo:** No Signal
+
 ## Repositorio
 https://github.com/LucasLedesma27/smartcv-ia
 
 ## Demo online
-**URL:** _(completar después del deploy en Vercel)_
+**URL:** https://smartcv-ia.vercel.app
+
+**Backend (API):** https://smartcv-ia.onrender.com
 
 ## Credenciales de prueba
 | Campo | Valor |
@@ -32,12 +36,16 @@ El usuario demo incluye perfil profesional, experiencias, educación y habilidad
 - DevOps: Docker, GitHub Actions
 
 ## Integrantes
-_(completar nombres)_
 
-1. 
-2. 
-3. 
-4. 
+| # | Nombre |
+|---|--------|
+| 1 | Lucas Ledesma |
+| 2 | Juan Pablo Gómez |
+| 3 | Leandro Paredes |
+| 4 | Francisco Mestre |
 
 ## Nota sobre el plan free de Render
-La primera carga del backend puede tardar ~50 segundos si el servicio estuvo inactivo.
+La primera carga del backend puede tardar ~50 segundos si el servicio estuvo inactivo. Antes de probar la app, se puede abrir https://smartcv-ia.onrender.com/actuator/health y esperar a que responda `UP`.
+
+## Nota sobre Google Gemini (plan gratuito)
+El análisis de CV y la carta de presentación dependen de la API de Gemini. En horarios de mucha demanda puede aparecer un error temporal (503). En ese caso, esperar 30 segundos y volver a intentar.

@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -38,13 +38,15 @@ public class GeminiService {
     @Value("${gemini.model:gemini-2.5-flash}")
     private String model;
 
-    /** gemini-2.0-flash tiene cuota free = 0; priorizar modelos con cuota activa. */
+    /** Modelos alternativos si el principal está saturado o sin cuota. */
     private static final List<String> MODEL_FALLBACKS = List.of(
-            "gemini-2.5-flash",
             "gemini-2.5-flash-lite",
             "gemini-1.5-flash-latest",
-            "gemini-2.0-flash"
+            "gemini-2.0-flash-lite"
     );
+
+    private static final int MAX_ATTEMPTS_PER_MODEL = 2;
+    private static final long RETRY_DELAY_MS = 1500;
 
     @Transactional(readOnly = true)
     public AiAnalysisResponseDTO analyzeCv() {
@@ -155,19 +157,48 @@ public class GeminiService {
 
         for (String modelName : modelsToTry) {
             try {
-                return invokeGemini(prompt, modelName, jsonResponse);
+                return invokeGeminiWithRetries(prompt, modelName, jsonResponse);
             } catch (GeminiApiException e) {
                 lastError = e;
-                String msg = e.getMessage() != null ? e.getMessage() : "";
-                if (msg.contains("404") || (msg.contains("429") && msg.contains("limit: 0"))) {
+                if (isRetryableGeminiError(e.getMessage())) {
                     continue;
                 }
                 throw e;
             }
         }
 
+        if (lastError != null && isHighDemandError(lastError.getMessage())) {
+            throw new GeminiApiException(
+                    "El servicio de IA de Google está saturado en este momento. Esperá 30 segundos e intentá de nuevo.");
+        }
+
         throw lastError != null ? lastError : new GeminiApiException(
                 "No se pudo conectar con Gemini. Configure GEMINI_MODEL=gemini-2.5-flash y verifique su API key en AI Studio.");
+    }
+
+    private String invokeGeminiWithRetries(String prompt, String modelName, boolean jsonResponse) {
+        GeminiApiException lastError = null;
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS_PER_MODEL; attempt++) {
+            try {
+                return invokeGemini(prompt, modelName, jsonResponse);
+            } catch (GeminiApiException e) {
+                lastError = e;
+                if (attempt < MAX_ATTEMPTS_PER_MODEL && isRetryableGeminiError(e.getMessage())) {
+                    sleepQuietly(RETRY_DELAY_MS);
+                    continue;
+                }
+                throw e;
+            }
+        }
+        throw lastError != null ? lastError : new GeminiApiException("Error inesperado al llamar a Gemini");
+    }
+
+    private void sleepQuietly(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private String invokeGemini(String prompt, String modelName, boolean jsonResponse) {
@@ -234,7 +265,7 @@ public class GeminiService {
             return text.toString();
         } catch (GeminiApiException e) {
             throw e;
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             String detail = extractGeminiError(e);
             throw new GeminiApiException("Gemini API error " + e.getStatusCode().value()
                     + " (modelo: " + modelName + "): " + detail);
@@ -244,7 +275,26 @@ public class GeminiService {
         }
     }
 
-    private String extractGeminiError(HttpClientErrorException e) {
+    /** Reintenta con el siguiente modelo si el actual no está disponible o está saturado. */
+    private boolean isRetryableGeminiError(String message) {
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+        return message.contains("404")
+                || message.contains("503")
+                || message.contains("429")
+                || message.contains("UNAVAILABLE")
+                || message.contains("high demand")
+                || message.contains("limit: 0");
+    }
+
+    private boolean isHighDemandError(String message) {
+        return message != null && (message.contains("503")
+                || message.contains("high demand")
+                || message.contains("UNAVAILABLE"));
+    }
+
+    private String extractGeminiError(HttpStatusCodeException e) {
         try {
             JsonNode error = objectMapper.readTree(e.getResponseBodyAsString()).path("error");
             if (!error.isMissingNode()) {
